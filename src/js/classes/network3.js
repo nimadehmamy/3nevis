@@ -359,57 +359,9 @@ var network = {
     return nodes;
   },
   
-  get_nodes_Jianxi : function(nodeloc, center, sizes, sizeFunc, hide){
-    var nodes = {};
-    // first find center of all points
-    var com = [0,0,0];
-    if (center){
-      for(i in nodeloc){
-        var ii = nodeloc[i];
-        com = [com[0]+ii[0],0*com[1]+ii[1],com[2]+ii[2]];
-      }
-      var nl = nodeloc.length
-      com = [com[0]/nl,com[1]/nl,com[2]/nl];
-    }
-    if(typeof sizeFunc === 'undefined'){
-      sizeFunc = network.sizeFunc;
-    }
-    
-    for(i in nodeloc){
-      var bx = false;
-      var ns = nodesize;
-      if (typeof sizes !== 'undefined'){//(0 !== sizes){
-        ns=sizeFunc(nodesize*sizes[i]);
-      }
-      var ii = nodeloc[i];
-      if (ii.length == 3){ id = i;}
-      var col = ii[1] < 1 ? 0x0000ff : nodecolor;
-      var fl = false;
-      if (ii[1]< 2){ // if the y lie low and near the bed, pin them there.
-        ii[1]= 2;
-        fl = true;
-        ns = 4;
-        bx = true;
-      }
-      if (ii[1] > 15){
-        // show high nodes
-        fl = true;
-      }
-      nodes[id] = new network.node(id, new THREE.Vector3(ii[0]-com[0]+5,Math.sqrt(ii[1])*7-0*com[1]-8,ii[2]-com[2]),ns, box = bx, color = col);//degrees[i]
-      //if (typeof hide !== 'undefined'){
-      // if (i< 100){
-      if (fl){
-        scene.add(nodes[id].node);
-       }
-      cam_loc = Math.max(cam_loc,ii[2]);
-      
-      cam_speed = cam_loc/100.0 ;
-    }
-    return nodes;
-  },
   
   weightFunc : function(w){
-    return Math.asinh(edgethickness*w)/2.+.4;//w*edgethickness; // Math.asinh(edgethickness*w)/3+.1;
+    return Math.asinh(edgethickness*w)/2.0+0.4;//w*edgethickness; // Math.asinh(edgethickness*w)/3+.1;
   },
   
   sizeFunc : function(s){

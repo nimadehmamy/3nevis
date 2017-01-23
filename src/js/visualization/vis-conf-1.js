@@ -1,13 +1,13 @@
 var controls = new function(){
     this.scale = 10;
-    this.nodeSize = 0.4;
+    this.nodeSize = 0.02;
     //this.nodeColor = '#0000ff';
 	  this.nodeColor = '#ede7e4';
     this.edgeDiameter = 0.02;
     this.edgeSegments = 20;
     this.edgeOpacity = 1;
-    this.nodeDetail = 4;
-    this.edgeCross = 8;
+    this.nodeDetail = 3;
+    this.edgeCross = 3;
     this.edgeStarriness = .0;
     this.edgeColorRandom = false;
     //this.edgeColor = '#ffffff';
@@ -78,7 +78,7 @@ function background(){
 }
 
 guiNode.add(controls, 'nodeSize', 0.001, 2).step(0.001).onFinishChange(redrawNodes);
-guiNode.add(controls, 'nodeDetail', 1, 10).step(1).onFinishChange(redrawNodes);
+guiNode.add(controls, 'nodeDetail', 0, 10).step(1).onFinishChange(redrawNodes);
 guiNode.addColor(controls, 'nodeColor').onChange(redrawNodes);
 
 guiEdge.add(controls, 'edgeDiameter', 0.001, 2).step(0.001).onFinishChange(redrawEdges);
