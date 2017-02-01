@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset=utf-8>
-		<title>3D Network</title>
+		<title>3D Network Visualization</title>
 	      <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
         <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.0/knockout-min.js"></script>
@@ -50,42 +50,42 @@
             </form>
             
             <script>
-                events.dragAround('obj')
-                var ViewModel = function(label) {
-                    this.nodeLabel = ko.observable('Network Name');
-                    var self = this;
-                    self.makeViz = function(){
-                        console.log('ko worked');
-                        Viz();
-                    }
-                       
-                };
-                
-                ko.applyBindings(new ViewModel()); // This makes Knockout get to work
-
-                var vizflag = {};
-                var VizClear = function(id){
-                  if (!(id in vizflag)){
-                    console.log(id);
-                    var netn = document.getElementById(id);
-                    netn.value='';
-                    netn.style.color = '#000000';
-                    var b = document.getElementById('Viz');
-                    b.textContent = "Viz";
-                    b.style.backgroundColor = '#4CAF50';
-                    vizflag[id] = true;
+              events.dragAround('obj')
+              var ViewModel = function(label) {
+                  this.nodeLabel = ko.observable('Network Name');
+                  var self = this;
+                  self.makeViz = function(){
+                      console.log('ko worked');
+                      Viz();
                   }
+                     
+              };
+              
+              ko.applyBindings(new ViewModel()); // This makes Knockout get to work
+
+              var vizflag = {};
+              var VizClear = function(id){
+                if (!(id in vizflag)){
+                  console.log(id);
+                  var netn = document.getElementById(id);
+                  netn.value='';
+                  netn.style.color = '#000000';
+                  var b = document.getElementById('Viz');
+                  b.textContent = "Viz";
+                  b.style.backgroundColor = '#4CAF50';
+                  vizflag[id] = true;
                 }
-                
-                var VizFill = function(id){
-                  VizClear(id);
-                  var d = document.getElementById('ctrl');
-                  f = d.files[0]
-                  var z = document.getElementById(id);
-                  z.value = f.webkitRelativePath.split('/')[0];
-                  Viz();
-                }
-              </script>
+              }
+              
+              var VizFill = function(id){
+                VizClear(id);
+                var d = document.getElementById('ctrl');
+                f = d.files[0]
+                var z = document.getElementById(id);
+                z.value = f.webkitRelativePath.split('/')[0];
+                Viz();
+              }
+            </script>
             
           </div>
           
@@ -118,8 +118,10 @@
     
     	<!--<script src="src/js/visualization/vis-test.js" defer>/* the main script */</script>
     	-->
-    	<script src="src/js/visualization/vis-conf-1.js" defer>/* the main script */</script>
-    	
+    	<!--<script src="src/js/visualization/vis-conf-1.js" defer>/* the main script */</script>
+    	-->
+    	<script src="src/js/visualization/vis-stress-2.js" defer>/* the main script */</script>
+    	<script src="src/js/misc/typeahead-conf.js">/*listing dirs*/</script>
     	<script src="src/js/exporters/OBJExporter.js"></script>
     	<script src="src/js/exporters/exporter.js">/* for exporting and downloading */</script>
     	<!--<a href="data:application/octet-stream;charset=utf-16le,helloworld">text file</a>
