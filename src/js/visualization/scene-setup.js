@@ -7,10 +7,10 @@ container = document.getElementById('canvas-container');
 scene = new THREE.Scene();
 
 // ---- camera
-camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 10000);
+camera = new THREE.PerspectiveCamera(120, window.innerWidth / window.innerHeight, 0.1, 10000);
 // camera orbit control
 cameraCtrl = new THREE.OrbitControls(camera, container);
-cameraCtrl.object.position.y = 15;
+cameraCtrl.object.position.y = 50;
 cameraCtrl.update();
 
 // ---- renderer

@@ -3,7 +3,7 @@ var controls = new function(){
     this.nodeSize = 0.2;
     //this.nodeColor = '#0000ff';
 	  this.nodeColor = '#ede7e4';
-    this.edgeDiameter = 2.;
+    this.edgeDiameter = 1.;
     this.edgeSegments = 50;
     this.edgeOpacity = 1;
     this.nodeDetail = 3;
@@ -17,6 +17,7 @@ var controls = new function(){
     this.conflicts = 0.2;
     this.th = [];
     this.showStress = false;
+    this.stressOpacity = false;
 }
 
 var distz;
@@ -60,22 +61,73 @@ function colorEdges(){
     //l.link.material.color.setRGB(1,.3*c,c);
   }
 }
-
+var geo,mat,trig;
+function makeSurface(){
+  geo = new THREE.Geometry();
+  for (var i in nodes){geo.vertices.push(nodes[i].position)}
+  mat = new THREE.MeshLambertMaterial( {
+      color: 0xff70c0,
+      //vertexColors: THREE.FaceColors,
+		  side: THREE.DoubleSide,
+		  transparent: true,
+    });
+    tr = network.info.trigs;
+    for (i in tr){ u=tr[i]; geo.faces.push(new THREE.Face3(u[0],u[1],u[2]));}
+    geo.computeFaceNormals ();
+    geo.computeVertexNormals ();
+    trig = new THREE.Mesh( geo, mat );
+    scene.add(trig);
+}
 
 function showStress(){
-    if (!controls.showStress){ redrawEdges(); }
+    if (!controls.showStress){ redrawAll(); }
     else{
+        var st = network.info.stress;
         var mx = 0;
         for (var i = 0; i < edge_list.length; i++) {
-            mx = Math.max(mx, network.info.ct[i]);
-            mx = Math.max(mx, network.info.cp[i]);
+            mx = Math.max(mx, st.link_p[i]);
+            mx = Math.max(mx, st.link_t[i]);
+        }
+        for (var i in nodes) {
+            mx = Math.max(mx, st.node_p[i]);
+            mx = Math.max(mx, st.node_t[i]);
         }
         for (var i = 0; i < edge_list.length; i++) {
             e = edges[edge_list[i]];
-            e.link.mesh.material.color.setRGB(network.info.cp[i] / mx, 0, network.info.ct[i] / mx)
+            e.link.mesh.material.color.setRGB(st.link_p[i] / mx, 0, st.link_t[i] / mx)
+            // e.link.mesh.material.opacity = 0.5*(st.link_p[i]+st.link_t[i])/mx;
+        }
+        for (var i in nodes) {
+            nodes[i].material.color.setRGB(st.node_p[i] / mx, 0, st.node_t[i] / mx);
+            // nodes[i].material.opacity =  0.5*(st.node_p[i]+st.node_t[i])/mx;
         }
     }
 }
+
+function stressOpacity(){
+    if (!controls.stressOpacity){ redrawAll(); }
+    else{
+        var st = network.info.stress;
+        var mx = 0;
+        for (var i = 0; i < edge_list.length; i++) {
+            mx = Math.max(mx, st.link_p[i]);
+            mx = Math.max(mx, st.link_t[i]);
+        }
+        for (var i in nodes) {
+            mx = Math.max(mx, st.node_p[i]);
+            mx = Math.max(mx, st.node_t[i]);
+        }
+        for (var i = 0; i < edge_list.length; i++) {
+            e = edges[edge_list[i]];
+            e.link.mesh.material.opacity = 0.5*(st.link_p[i]+st.link_t[i])/mx;
+        }
+        for (var i in nodes) {
+            nodes[i].material.opacity =  0.5*(st.node_p[i]+st.node_t[i])/mx;
+        }
+    }
+}
+
+
 
 
 
@@ -109,7 +161,8 @@ guiEdge.add(controls, 'edgeColorRandom').onFinishChange(redrawEdges);
 
 guiEdge.add(controls, 'edgeOpacity', 0., 1).onFinishChange(redrawEdges);
 
-guiEdge.add(controls, 'showStress').onFinishChange(showStress);
+guiNet.add(controls, 'showStress').onFinishChange(showStress);
+guiNet.add(controls, 'stressOpacity').onFinishChange(stressOpacity);
 
 
 
@@ -117,9 +170,9 @@ var detail = 3;//3;
 var ngon = 8; //cross-section n-gon
 // major scale
 //var scale = -10;//3;
-var nodesize = 1.0;
-var edgethickness = 2;//0.4;
-var edgesegments = 50; //10;
+//var nodesize = 1.0;
+//var edgethickness = 2;//0.4;
+//var edgesegments = 50; //10;
 var cam_speed = 0.1;
 var cam_loc= 5;
 
@@ -179,21 +232,26 @@ var Viz = function(){
       network.info = data;
       try{
         th = data.links.thickness;
+        // try{th/= data.scale;}
+        // catch(err){ console.log('!! no scale in info !!'); }
       }catch(err){
         console.log(err.message);
         th = data.th;
       }
       if(typeof(th)=='number'){
-        controls.edgeDiameter = th; // * Math.abs(controls.scale);
+        //controls.edgeDiameter = th; // * Math.abs(controls.scale);
+        controls.thickness = th
+        controls.nodeSize = th;// * Math.abs(controls.scale);
       }else{
-        controls.th = th;
+        controls.thickness = th;
       }
+      controls.scale = 1/data.scale;
       redrawEdges();
-      controls.nodeSize = th;// * Math.abs(controls.scale);
+      //controls.nodeSize = th;// * Math.abs(controls.scale);
       redrawNodes();
     })
     .fail(function() {
-    console.log( "error 21l;k2" );
+    console.log( "error !!!" );
   });
     //console.log('assets/network/'+netName+'/info.json');
     //controls.edgeDiameter = j.responseJSON.th * Math.abs(controls.scale);
@@ -208,7 +266,7 @@ var Viz = function(){
   console.log('th=',controls.edgeDiameter);
   edges = network.get_edges(
     edge_list
-    ,radius = controls.edgeDiameter
+    ,radius = controls.thickness
     ,segments = controls.edgeSegments
     ,colors = undefined
     ,polymer = 1
@@ -217,23 +275,10 @@ var Viz = function(){
   b.textContent = "Loaded";
   
   
-  var geometry = new THREE.SphereGeometry(
-    radius = controls.scale/2
-    ,widthSegments = 50
-    ,heightSegments = 20
-    // ,phiStart = 0
-    // ,phiLength = Math.PI
-    // ,thetaStart = 0
-    // ,thetaLength = Math.PI
-    );
-  var material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-  var sphere = new THREE.Mesh( geometry, material );
-  //scene.add( sphere );
-  
   
   vars = {
-    edgeGeometry : edges[ edge_list[0].slice(0,2)].link.geometry.type
-    ,nodeGeometry : nodes[0].geometry.type
+    edgeGeometry : "ExtrudeGeometry"//edges[ edge_list[0].slice(0,2)].link.geometry.type ||
+    ,nodeGeometry : "TetrahedronGeometry"//nodes[0].geometry.type ||
   }
   
   render();
@@ -275,16 +320,17 @@ function base(height,thickness){
 
 function redrawEdges(){
   console.log('change');
-  var ii = 0;
+  //var ii = 0;
   var th = 1;
-  for (i in edges){
+  for (ii in edge_list){
     try{
-      if (controls.th.length >0 ){th = controls.th[ii++]}
+        i = edge_list[ii]
+      if (controls.thickness.length >0 ){edges[i].size = controls.thickness[ii]}
       scene.remove(edges[i].link.mesh);
       //console.log(edges[i].link.mesh);
       edges[i].link = new network.linkWithCrossSection(
         edges[i].points
-        ,controls.edgeDiameter*th
+        ,edges[i].size
         ,controls.edgeSegments
         ,undefined //Math.random() * 0xffffff
         ,undefined
@@ -299,11 +345,13 @@ function redrawEdges(){
 }
 
 function redrawNodes(){
+    console.log('redrawing nodes...');
   for (i in nodes){
     scene.remove(nodes[i].node);
   }
-  nodes = network.get_nodes(nodes_loc, center = false, sizes = degrees
-  , sizeFunc = function(s){return Math.abs(controls.scale)*controls.nodeSize*network.sizeFunc(s)});
+  nodes = network.get_nodes(nodes_loc, center = false, sizes = undefined
+//   , sizeFunc = function(s){return Math.abs(controls.scale)*controls.nodeSize*network.sizeFunc(s)}
+  );
   //
 }
 var sh= shell(Math.abs(controls.scale)/2,1);

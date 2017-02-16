@@ -15,16 +15,12 @@ var network = {
     */
     this.type = 'node';
     var bx = box || false;
-    this.color = color || controls.nodeColor //nodecolor
+    this.color = color || controls.nodeColor; //nodecolor
     this.id = id;
     this.size = s;
     var detail = controls.nodeDetail;
     
-    // if (typeof box !== 'undefined'){
-    if (bx){
-      this.geometry = new THREE.BoxGeometry( this.size, this.size, this.size );
-    }
-    else {this.geometry = new THREE.TetrahedronGeometry( this.size, detail );}
+    this.geometry = new THREE.TetrahedronGeometry( this.size, detail );
     this.material = new THREE.MeshLambertMaterial( {
       color: this.color,
       vertexColors: THREE.FaceColors,
@@ -83,8 +79,9 @@ var network = {
     this.link.updateMatrix();
   },
   
-  
   linkWithCrossSection: function(points ,radius, segs, color, wings,starryness, hide, opacity){
+      
+    `NOTE: rescales with controls.scale!!!`
     var w = wings || controls.edgeCross //ngon
       ,st = starryness || controls.edgeStarriness //starry
       ,col = color || controls.edgeColor //linkcolor
@@ -98,7 +95,7 @@ var network = {
     var xshape = [], count = w*3;
     for ( var i = 0; i < count; i ++ ) {
     	var a = 2 * i / count * Math.PI;
-    	var r = Math.abs(controls.scale) * radius * ( 1 - st * Math.cos( w * a ));
+    	var r = radius * ( 1 - st * Math.cos( w * a )) * Math.abs(controls.scale);
     	xshape.push( new THREE.Vector2 ( Math.cos( a ) * r, Math.sin( a ) * r ) );
     }
     if (points.length <2) {
@@ -124,39 +121,11 @@ var network = {
       side: THREE.DoubleSide,
     } );//, wireframe: true MeshBasicMaterial
     this.mesh = new THREE.Mesh( this.geometry, this.material );
-    
+    this.points = pts;
     if (!hide){
       scene.add(this.mesh);
     }
     
-  },
-  
-  link2: function(id1,id2,rad, color, segments){
-    /* !! Note: assumes global variable "nodes" defined. It must be
-    an array of instances of "network.node".
-    Make a link from v1 to v2 (vectors) with radius rad and length len
-    */
-    this.type = 'link';
-    
-    var col = color || linkcolor;
-    this.endpoints = [id1,id2];
-    var v1 = nodes[id1].position;
-    var v2 = nodes[id2].position;
-    var points = misc.getParabola(nodes[id1], nodes[id2], segments);
-    //var points = [v1,v2];
-    this.size = rad;
-    this.link = new network.linkWithCrossSection(
-      points
-      ,radius = rad
-      ,segs = segments
-      ,color = col
-      //,wings = ngon
-      //,starryness = starry
-      ) ;
-    
-    //this.material = new THREE.MeshLambertMaterial( { color: col } );//, wireframe: true MeshBasicMaterial
-    //this.link = new THREE.Mesh( this.geometry, this.material );
-    //this.position = this.link.position;
   },
   
   linkGrowth: function(id1,id2, rad, color, segments, polymer){
@@ -165,31 +134,15 @@ var network = {
     Make a link from v1 to v2 (vectors) with radius rad and length len
     */
     var col = color // || controls.edgeColor //linkcolor
-        ,segs = segments || edgesegments;
+        ,segs = segments || controls.edgeSegments;
     
     //c = controls.scale;
     this.endpoints = [id1,id2];
     this.type = 'link';
     this.size = rad;
     if (polymer > 0){
-      // // read the points
-      // try{
-      //   var p0 = loader.readMatrix('assets/network/'+netName+'/edges/'+[id1,id2]+'.txt',' ');
-      // }
-      // catch(err){
-      //   if (err.name == "TypeError"){
-      //     console.log('!! Edge file for ('+[id1,id2]+') not found!');
-      //   }
-      //   return 1;
-      // }
-      // var pts = [];
-      // for (j in p0){
-      //   //if (j> 500) break;
-      //   pts.push(new THREE.Vector3(c*p0[j][0],-c*p0[j][1],c*p0[j][2]));
-      // }
-      // console.log('making edge (%d,%d) with %d pts',id1,id2, pts.length);
       this.points = network.get_linkPoints(netName, id1, id2);//pts;
-      this.link = new network.linkWithCrossSection(this.points, rad, segs,  col ,undefined, undefined );//starryness = .1);
+      this.link = 'here';//new network.linkWithCrossSection(this.points, rad, segs,  col ,undefined, undefined );//starryness = .1);
     }
     else{
       var v1 = nodes[id1].position;
@@ -205,34 +158,6 @@ var network = {
     }
   },
   
-  link3: function(points,rad, color, segments){
-    /* !! Note: assumes global variable "nodes" defined. It must be
-    an array of instances of "network.node".
-    Make a link from v1 to v2 (vectors) with radius rad and length len
-    */
-    this.type = 'link';
-    
-    // if (color){col=color;}
-    // else col = linkcolor;
-    var col = color || linkcolor;
-    
-    this.endpoints = [id1,id2];
-    var v1 = nodes[id1].position;
-    var v2 = nodes[id2].position;
-    var points = misc.getParabola(nodes[id1], nodes[id2], segments);
-    //var points = [v1,v2];
-    this.size = rad;
-    this.geometry = new network.linkWithCrossSection(
-      points
-      ,radius = rad
-      ,segs = segments
-      ,wings = ngon
-      ,starryness = starry
-      ).geometry ;
-    this.material = new THREE.MeshLambertMaterial( { color: col } );//, wireframe: true MeshBasicMaterial
-    this.link = new THREE.Mesh( this.geometry, this.material );
-    this.position = this.link.position;
-  },
   
   get_linkPoints : function (netName, id1, id2){
     // read the points
@@ -247,16 +172,21 @@ var network = {
         }
         //return NaN;
       }
-      // var pts = [];
-      // for (j in p0){
-      //   //if (j> 500) break;
-      //   pts.push(new THREE.Vector3(c*p0[j][0],-c*p0[j][1],c*p0[j][2]));
-      // }
       console.log('making edge (%d,%d) with %d pts',id1,id2, p0.length);
     
       return p0;//network.rescale(p0);
   },
   
+  rescale3: function(p0){
+    var c = controls.scale;
+    var pts = [];
+    for (j in p0){
+      //if (j> 500) break;
+      pts.push(new THREE.Vector3(c*p0[j].x,-c*p0[j].y,c*p0[j].z));
+    }
+      
+    return pts;
+  },
   rescale: function(p0){
     var c = controls.scale;
     var pts = [];
@@ -286,8 +216,8 @@ var network = {
     // }
     var segs = segments || 1,
         pol = polymer || 0,
-        rad = radius || edgethickness;
-    console.log('segs=', segs);
+        rad = radius || controls.edgeDiameter;
+    //console.log('segs=', segs);
     
     var edges = {};
     
@@ -298,13 +228,18 @@ var network = {
         console.log('color given!!!!:', col);
       }
       else col = linkcolor;
-      
+      if (typeof(rad)=="object"){
+          r = rad[i]
+          console.log(rad);
+          TypeError
+      }else r = rad;
       var ii = elist[i];
+      
       //console.log(ii);
       if (ii.length == 2){
         id = ii;
         //edges[id] = new network.link2(ii[0],ii[1],edgethickness,col,segs);
-        edges[id] = new network.linkGrowth(ii[0],ii[1],rad,col,segs, pol);
+        edges[id] = new network.linkGrowth(ii[0],ii[1],r,col,segs, pol);
       }
       else if (ii.length == 3){ //weight given
         id = ii.slice(0,2);
@@ -323,39 +258,28 @@ var network = {
   get_nodes : function(nodeloc, center, sizes, sizeFunc, hide){
     var c = controls.scale;
     var nodes = {};
-    // first find center of all points
-    var com = [0,0,0];
-    if (center){
-      for(i in nodeloc){
-        var ii = nodeloc[i];
-        com = [com[0]+ii[0],com[1]+ii[1],com[2]+ii[2]];
-      }
-      var nl = nodeloc.length
-      com = [com[0]/nl,com[1]/nl,com[2]/nl];
-    }
+    
     if(typeof sizeFunc === 'undefined'){
       sizeFunc = network.sizeFunc;
     }
     
     for(i in nodeloc){
       var bx = false;
-      var ns = nodesize;
-      if (typeof sizes !== 'undefined'){//(0 !== sizes){
-        ns=sizeFunc(nodesize*sizes[i]);
-      }
+      var ns = network.sizeFunc(controls.scale*controls.nodeSize);
+    //   if (typeof sizes !== 'undefined'){//(0 !== sizes){
+    //     ns=sizeFunc(sizes[i]) * controls.scale;
+    //     console.log(ns)
+    //   }
+      console.log(ns);
       var ii = nodeloc[i];
       if (ii.length == 3){ id = i;}
-      // var col = ii[1] < 1 ? 0xff0000 : nodecolor;
-      // var fl = true;
       
-      nodes[id] = new network.node(id, new THREE.Vector3(c*(ii[0]-com[0]),-c*(ii[1]-com[1]),c*(ii[2]-com[2])),ns, box = bx);//, color = col);//degrees[i]
-      // if (fl){
+      nodes[id] = new network.node(id, new THREE.Vector3(c*ii[0],-c*ii[1],c*ii[2]),ns);
       scene.add(nodes[id].node);
-      // }
       cam_loc = Math.max(cam_loc,ii[2]);
-      
       cam_speed = cam_loc/100.0 ;
     }
+    
     return nodes;
   },
   
